@@ -97,13 +97,15 @@ public class MainWindow {
                 try {
                     @SuppressWarnings("unchecked")
                     final
-                    List<File> files = (List<File>) transferable
-                            .getTransferData(DataFlavor.javaFileListFlavor);
+                    List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                     for (final File file : files) {
                         encodeFile(file);
                     }
-                } catch (UnsupportedFlavorException | IOException e) {
-                    e.printStackTrace();
+                } catch (final UnsupportedFlavorException e) {
+                    LOG.error(e.getMessage(), e);
+                    return false;
+                } catch (final IOException e) {
+                    LOG.error(e.getMessage(), e);
                     return false;
                 }
                 return true;
