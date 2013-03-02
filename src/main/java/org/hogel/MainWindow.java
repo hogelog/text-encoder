@@ -12,7 +12,6 @@ import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -86,11 +85,10 @@ public class MainWindow {
         settingPanel.setLayout(new BorderLayout(0, 0));
 
         replaceTable = new JTable();
+        replaceTable.setCellSelectionEnabled(true);
+        replaceTable.setColumnSelectionAllowed(true);
         replaceTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         settingPanel.add(replaceTable, BorderLayout.CENTER);
-
-        final JScrollPane scrollPane = new JScrollPane();
-        settingPanel.add(scrollPane, BorderLayout.EAST);
 
         final TransferHandler dropHandler = new TransferHandler() {
             @Override
@@ -123,10 +121,9 @@ public class MainWindow {
         replaceTable.setTransferHandler(dropHandler);
     }
 
-    private final Encoder sjisencoder = new Encoder(Encoder.SJIS);
     private void encodeFile(File file) throws IOException {
         final byte[] readData = Files.toByteArray(file);
-        final byte[] writeData = sjisencoder.encode(readData);
+        final byte[] writeData = Encoding.encode(Encoding.SJIS, readData);
         if (Arrays.equals(readData, writeData)) {
             log(String.format("%s は既にShift-JISです。\n", file.getPath()));
         } else {
