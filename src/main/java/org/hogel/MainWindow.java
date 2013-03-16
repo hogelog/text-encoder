@@ -7,10 +7,12 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.CharacterCodingException;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -27,11 +29,13 @@ public class MainWindow {
 
     private static final Logger LOG = LoggerFactory.getLogger(MainWindow.class);
 
-    private JFrame frame;
+    JFrame frame;
 
-    private JTextArea logTextArea;
+    JTextArea logTextArea;
 
-    private JTable replaceTable;
+    JTable replaceTable;
+
+    Encoding encoding = new Encoding();
 
     /**
      * Launch the application.
@@ -41,8 +45,7 @@ public class MainWindow {
             @Override
             public void run() {
                 try {
-                    UIManager.setLookAndFeel(UIManager
-                            .getSystemLookAndFeelClassName());
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                     final MainWindow window = new MainWindow();
                     window.frame.setVisible(true);
                 } catch (final Exception e) {
@@ -96,11 +99,11 @@ public class MainWindow {
                 final Transferable transferable = support.getTransferable();
                 try {
                     @SuppressWarnings("unchecked")
-                    final
-                    List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                    final List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                     for (final File file : files) {
                         encodeFile(file);
                     }
+                    return true;
                 } catch (final UnsupportedFlavorException e) {
                     LOG.error(e.getMessage(), e);
                     return false;
@@ -108,7 +111,6 @@ public class MainWindow {
                     LOG.error(e.getMessage(), e);
                     return false;
                 }
-                return true;
             }
 
             @Override
@@ -123,14 +125,25 @@ public class MainWindow {
         replaceTable.setTransferHandler(dropHandler);
     }
 
-    private void encodeFile(File file) throws IOException {
-        final byte[] readData = Files.toByteArray(file);
-        final byte[] writeData = Encoding.encode(Encoding.SJIS, readData);
-        if (Arrays.equals(readData, writeData)) {
-            log(String.format("%s は既にShift-JISです。\n", file.getPath()));
-        } else {
-            Files.write(writeData, file);
-            log(String.format("%s をShift-JISに変換しました。\n", file.getPath()));
+    private void encodeFile(File file) {
+        try {
+            final byte[] readData = Files.toByteArray(file);
+            final byte[] writeData = encoding.encode(Encoding.SJIS, readData);
+            if (Arrays.equals(readData, writeData)) {
+                log(String.format("%s は既にShift-JISです。\n", file.getPath()));
+            } else {
+                Files.write(writeData, file);
+                log(String.format("%s をShift-JISに変換しました。\n", file.getPath()));
+            }
+        } catch (final EncodingException e) {
+            final String message = String.format("%sへの変換に失敗しました:\n%s", e.getTarget().displayName(), e.getSource());
+            log(message);
+            JOptionPane.showMessageDialog(frame, message); }
+        catch (final CharacterCodingException e) {
+            log(String.format("未知の文字コードのファイルです:\n%s\n", file));
+        } catch (final IOException e) {
+            log(e.getMessage());
+            LOG.error(e.getMessage(), e);
         }
     }
 
