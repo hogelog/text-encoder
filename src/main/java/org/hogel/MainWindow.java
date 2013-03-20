@@ -13,7 +13,7 @@ import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -36,6 +36,8 @@ public class MainWindow {
     JTable replaceTable;
 
     Encoding encoding = new Encoding();
+
+    private ReplaceTableModel replaceTableModel;
 
     /**
      * Launch the application.
@@ -74,24 +76,20 @@ public class MainWindow {
         final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
         frame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
 
-        final JPanel logPanel = new JPanel();
-        logPanel.setToolTipText("");
-        tabbedPane.addTab("変換ログ", null, logPanel, null);
-        logPanel.setLayout(new BorderLayout(0, 0));
-
         logTextArea = new JTextArea();
-        logPanel.add(logTextArea);
         logTextArea.setEditable(false);
 
-        final JPanel settingPanel = new JPanel();
-        tabbedPane.addTab("設定", null, settingPanel, null);
-        settingPanel.setLayout(new BorderLayout(0, 0));
+        final JScrollPane logPanel = new JScrollPane(logTextArea);
+        tabbedPane.addTab("変換ログ", null, logPanel, null);
 
-        replaceTable = new JTable();
-        replaceTable.setCellSelectionEnabled(true);
+        replaceTableModel = new ReplaceTableModel();
+        replaceTable = new JTable(replaceTableModel);
         replaceTable.setColumnSelectionAllowed(true);
+        replaceTable.setCellSelectionEnabled(true);
         replaceTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        settingPanel.add(replaceTable, BorderLayout.CENTER);
+
+        final JScrollPane settingPanel = new JScrollPane(replaceTable);
+        tabbedPane.addTab("設定", null, settingPanel, null);
 
         final TransferHandler dropHandler = new TransferHandler() {
             @Override
