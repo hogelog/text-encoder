@@ -5,6 +5,7 @@ import static org.junit.Assert.assertThat;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Before;
@@ -31,9 +32,16 @@ public class ConfigurationTest {
         assertThat(configText.contains("hoge"), is(true));
         assertThat(configText.contains("log"), is(true));
 
-        final Map<String, String> replacePatterns = config.getReplacePatterns();
+        Map<String, String> replacePatterns = config.getReplacePatterns();
         assertThat(replacePatterns.size(), is(1));
         assertThat(replacePatterns.get("hoge"), is("log"));
-    }
 
+        final Map<String, String> patterns = new LinkedHashMap<String, String>();
+        patterns.put("moge", "mog");
+        config.setReplacePatterns(patterns);
+
+        replacePatterns = config.getReplacePatterns();
+        assertThat(replacePatterns.size(), is(1));
+        assertThat(replacePatterns.get("moge"), is("mog"));
+    }
 }

@@ -1,2 +1,3 @@
 replace_patterns:
-  "UFJ": "三菱東京UFJ銀行"
+  –: ー
+  —: ー

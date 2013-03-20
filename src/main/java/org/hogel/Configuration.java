@@ -5,11 +5,13 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.DumperOptions.FlowStyle;
 import org.yaml.snakeyaml.Yaml;
 
 import com.google.common.base.Charsets;
@@ -21,7 +23,13 @@ public class Configuration {
 
     private static final String REPLACE_PATTERNS = "replace_patterns";
 
-    private final Yaml yaml = new Yaml();
+    private static final DumperOptions DUMPER_OPTIONS = new DumperOptions();
+
+    static {
+        DUMPER_OPTIONS.setDefaultFlowStyle(FlowStyle.BLOCK);
+    }
+
+    private final Yaml yaml = new Yaml(DUMPER_OPTIONS);
 
     private final File configFile;
 
@@ -67,8 +75,8 @@ public class Configuration {
         } catch (final IOException e) {
             LOG.error(e.getMessage(), e);
         }
-        this.configMap = new TreeMap<String, Object>();
-        this.replacePatterns = new TreeMap<String, String>();
+        this.configMap = new LinkedHashMap<String, Object>();
+        this.replacePatterns = new LinkedHashMap<String, String>();
         configMap.put(REPLACE_PATTERNS, replacePatterns);
         saveConfigFile();
     }
@@ -93,6 +101,12 @@ public class Configuration {
 
     public String getReplacePattern(String search) {
         return replacePatterns.get(search);
+    }
+
+    public void setReplacePatterns(Map<String, String> patterns) {
+        replacePatterns.clear();
+        replacePatterns.putAll(patterns);
+        saveConfigFile();
     }
 
     public Map<String, String> getReplacePatterns() {

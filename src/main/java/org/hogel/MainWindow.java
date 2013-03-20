@@ -1,6 +1,7 @@
 package org.hogel;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -11,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,13 +26,16 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
 import com.google.common.io.Files;
 
-public class MainWindow {
+public class MainWindow implements TableModelListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(MainWindow.class);
 
@@ -94,6 +99,8 @@ public class MainWindow {
         replaceTable.setColumnSelectionAllowed(true);
         replaceTable.setCellSelectionEnabled(true);
         replaceTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        replaceTable.setShowGrid(true);
+        replaceTable.setGridColor(Color.GRAY);
 
         final JScrollPane replaceTablePane = new JScrollPane(replaceTable);
 //        tabbedPane.addTab("設定", null, replaceTablePane, null);
@@ -111,16 +118,18 @@ public class MainWindow {
         newReplaceButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                LOG.info("click!");
+                final int rowCount = replaceTableModel.getRowCount();
+                replaceTableModel.setRowCount(rowCount + 1);
             }
         });
         settingPanel.add(newReplaceButton, BorderLayout.SOUTH);
 
         loadConfig();
+        replaceTableModel.addTableModelListener(this);
     }
 
     private void loadConfig() {
-        log(String.format("設定ファイル %s を読み込みました\n", config.getConfigFile()));
+        log(String.format("設定ファイル %s を読み込みました\n", config.getConfigFile().getAbsolutePath()));
         final Map<String, String> replacePatterns = config.getReplacePatterns();
         encoding.setCharacterMapping(replacePatterns);
 
@@ -182,6 +191,21 @@ public class MainWindow {
     private void log(String text) {
         System.err.print(text);
         logTextArea.setText(logTextArea.getText() + text);
+    }
+
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        final int rowCount = replaceTableModel.getRowCount();
+        final Map<String, String> replaceMap =  new LinkedHashMap<String, String>();
+        for (int i = 0; i < rowCount; ++i) {
+            final String search = (String) replaceTableModel.getValueAt(i, 0);
+            final String replace = (String) replaceTableModel.getValueAt(i, 1);
+            if (Strings.isNullOrEmpty(search) || Strings.isNullOrEmpty(replace))
+                continue;
+            replaceMap.put(search, replace);
+        }
+        config.setReplacePatterns(replaceMap);
+        log(String.format("設定ファイル %s を保存しました\n", config.getConfigFile().getAbsolutePath()));
     }
 
 }
