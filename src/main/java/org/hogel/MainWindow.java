@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -93,36 +94,50 @@ public class MainWindow {
         final JScrollPane settingPanel = new JScrollPane(replaceTable);
         tabbedPane.addTab("設定", null, settingPanel, null);
 
-        final TransferHandler dropHandler = new TransferHandler() {
-            @Override
-            public boolean importData(TransferSupport support) {
-                final Transferable transferable = support.getTransferable();
-                try {
-                    @SuppressWarnings("unchecked")
-                    final List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                    for (final File file : files) {
-                        encodeFile(file);
-                    }
-                    return true;
-                } catch (final UnsupportedFlavorException e) {
-                    LOG.error(e.getMessage(), e);
-                    return false;
-                } catch (final IOException e) {
-                    LOG.error(e.getMessage(), e);
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean canImport(TransferSupport support) {
-                return true;
-            }
-
-            private static final long serialVersionUID = 1L;
-        };
+        final TransferHandler dropHandler = new DropHandler();
         frame.setTransferHandler(dropHandler);
         logTextArea.setTransferHandler(dropHandler);
         replaceTable.setTransferHandler(dropHandler);
+
+        loadConfig();
+    }
+
+    private void loadConfig() {
+        log(String.format("設定ファイル %s を読み込みました\n", config.getConfigFile()));
+        final Map<String, String> replacePatterns = config.getReplacePatterns();
+        encoding.setCharacterMapping(replacePatterns);
+
+        replaceTableModel.setRowCount(0);
+        for (final String search : replacePatterns.keySet()) {
+            final String replace = replacePatterns.get(search);
+            replaceTableModel.addRow(new Object[]{search, replace});
+        }
+    }
+
+    private class DropHandler extends TransferHandler {
+        private static final long serialVersionUID = 1L;
+        @Override
+        public boolean importData(TransferSupport support) {
+            final Transferable transferable = support.getTransferable();
+            try {
+                @SuppressWarnings("unchecked")
+                final List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                for (final File file : files) {
+                    encodeFile(file);
+                }
+                return true;
+            } catch (final UnsupportedFlavorException e) {
+                LOG.error(e.getMessage(), e);
+                return false;
+            } catch (final IOException e) {
+                LOG.error(e.getMessage(), e);
+                return false;
+            }
+        }
+        @Override
+        public boolean canImport(TransferSupport support) {
+            return true;
+        }
     }
 
     private void encodeFile(File file) {

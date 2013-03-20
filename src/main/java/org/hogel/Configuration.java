@@ -70,6 +70,7 @@ public class Configuration {
         this.configMap = new TreeMap<String, Object>();
         this.replacePatterns = new TreeMap<String, String>();
         configMap.put(REPLACE_PATTERNS, replacePatterns);
+        saveConfigFile();
     }
 
     public void saveConfigFile() {
