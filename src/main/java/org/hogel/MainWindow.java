@@ -5,6 +5,8 @@ import java.awt.EventQueue;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
@@ -12,8 +14,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -91,13 +95,26 @@ public class MainWindow {
         replaceTable.setCellSelectionEnabled(true);
         replaceTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        final JScrollPane settingPanel = new JScrollPane(replaceTable);
+        final JScrollPane replaceTablePane = new JScrollPane(replaceTable);
+//        tabbedPane.addTab("設定", null, replaceTablePane, null);
+        final JPanel settingPanel = new JPanel();
+        settingPanel.setLayout(new BorderLayout(0, 0));
+        settingPanel.add(replaceTablePane, BorderLayout.CENTER);
         tabbedPane.addTab("設定", null, settingPanel, null);
 
         final TransferHandler dropHandler = new DropHandler();
         frame.setTransferHandler(dropHandler);
         logTextArea.setTransferHandler(dropHandler);
         replaceTable.setTransferHandler(dropHandler);
+
+        final JButton newReplaceButton = new JButton("置き換えパターン追加");
+        newReplaceButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                LOG.info("click!");
+            }
+        });
+        settingPanel.add(newReplaceButton, BorderLayout.SOUTH);
 
         loadConfig();
     }
