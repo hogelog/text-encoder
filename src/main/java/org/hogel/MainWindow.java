@@ -8,6 +8,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
@@ -28,6 +29,7 @@ import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.ImageIcon;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +82,7 @@ public class MainWindow implements TableModelListener {
      * Initialize the contents of the frame.
      */
     private void initialize() {
-        frame = new JFrame();
+        frame = new JFrame("Shift-JIS Encoder");
         frame.setBounds(100, 100, 450, 300);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().setLayout(new BorderLayout(0, 0));
@@ -88,6 +90,9 @@ public class MainWindow implements TableModelListener {
         final JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
         frame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
 
+        final ImageIcon windowIcon = new ImageIcon(getClass().getResource("/icon.png"));
+        frame.setIconImage(windowIcon.getImage());
+        
         logTextArea = new JTextArea();
         logTextArea.setEditable(false);
 
@@ -103,7 +108,6 @@ public class MainWindow implements TableModelListener {
         replaceTable.setGridColor(Color.GRAY);
 
         final JScrollPane replaceTablePane = new JScrollPane(replaceTable);
-//        tabbedPane.addTab("設定", null, replaceTablePane, null);
         final JPanel settingPanel = new JPanel();
         settingPanel.setLayout(new BorderLayout(0, 0));
         settingPanel.add(replaceTablePane, BorderLayout.CENTER);
