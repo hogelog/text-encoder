@@ -8,15 +8,24 @@ import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.util.Map;
 
+import org.junit.Before;
 import org.junit.Test;
+
+import com.google.common.collect.ImmutableMap;
 
 public class EncodingTest {
 
     String text = "日本語日本語";
 
     private static final Charset[] encodings = {SJIS, UTF8};
-    private final Encoding encoding = new Encoding(encodings);
+    private Encoding encoding;
+
+    @Before
+    public void before() {
+        encoding = new Encoding(encodings);
+    }
 
     @Test
     public void encode_utf8_to_sjis() throws Exception {
@@ -56,6 +65,16 @@ public class EncodingTest {
             assertThat(e.getSource(), is(text));
             assertThat(e.getTarget(), is(SJIS));
         }
+    }
+
+    @Test
+    public void encode_mapping_unicode() throws CharacterCodingException, EncodingException {
+        final String text = "维基百科";
+        final byte[] utf8 = text.getBytes(UTF8);
+        final Map<String, String> mapping = ImmutableMap.of("维基", "キテレツ");
+        encoding.setCharacterMapping(mapping);
+        final byte[] encoded = encoding.encode(SJIS, utf8);
+        assertThat(new String(encoded, SJIS), is("キテレツ百科"));
     }
 
 }

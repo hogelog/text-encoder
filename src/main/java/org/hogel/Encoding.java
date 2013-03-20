@@ -6,6 +6,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.util.Map;
 
 public class Encoding {
     public static final Charset SJIS = Charset.forName("SJIS");
@@ -16,6 +17,7 @@ public class Encoding {
     };
 
     private final Charset[] candidates;
+    private Map<String, String> mapping = null;
 
     public Encoding() {
         this(DEFAULT_CANDIDATE_ENCODINGS);
@@ -25,12 +27,25 @@ public class Encoding {
         this.candidates = candidates;
     }
 
+    public void setCharacterMapping(Map<String, String> mapping) {
+        this.mapping = mapping;
+    }
+
     public byte[] encode(Charset target, byte[] data) throws EncodingException, CharacterCodingException {
         final String decoded = guessDecode(data);
         return encode(target, decoded);
     }
 
     public byte[] encode(Charset target, String decoded) throws EncodingException {
+        if (mapping != null) {
+            for (final String search : mapping.keySet()) {
+                decoded = decoded.replace(search, mapping.get(search));
+            }
+        }
+        return encodeInternal(target, decoded);
+    }
+
+    private byte[] encodeInternal(Charset target, String decoded) throws EncodingException {
         final CharsetEncoder encoder = target.newEncoder();
         final CharBuffer decodedBuffer = CharBuffer.wrap(decoded);
         try {

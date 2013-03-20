@@ -37,6 +37,8 @@ public class MainWindow {
 
     Encoding encoding = new Encoding();
 
+    Configuration config = new Configuration("config.yaml");
+
     private ReplaceTableModel replaceTableModel;
 
     /**
