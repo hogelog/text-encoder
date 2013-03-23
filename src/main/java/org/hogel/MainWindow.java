@@ -8,7 +8,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.CharacterCodingException;
@@ -17,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -29,7 +29,6 @@ import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.ImageIcon;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,19 +55,27 @@ public class MainWindow implements TableModelListener {
     /**
      * Launch the application.
      */
-    public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                    final MainWindow window = new MainWindow();
-                    window.frame.setVisible(true);
-                } catch (final Exception e) {
-                    LOG.error(e.getMessage(), e);
+    public static void main(final String[] args) {
+        try {
+            EventQueue.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                        final MainWindow window = new MainWindow();
+                        if (args.length == 0) {
+                            window.frame.setVisible(true);
+                        } else {
+                            window.encodeFiles(args);
+                        }
+                    } catch (final Exception e) {
+                        LOG.error(e.getMessage(), e);
+                    }
                 }
-            }
-        });
+            });
+        } catch (final Exception e) {
+            LOG.error(e.getMessage(), e);
+        }
     }
 
     /**
@@ -92,7 +99,7 @@ public class MainWindow implements TableModelListener {
 
         final ImageIcon windowIcon = new ImageIcon(getClass().getResource("/icon.png"));
         frame.setIconImage(windowIcon.getImage());
-        
+
         logTextArea = new JTextArea();
         logTextArea.setEditable(false);
 
@@ -210,6 +217,13 @@ public class MainWindow implements TableModelListener {
         }
         config.setReplacePatterns(replaceMap);
         log(String.format("設定ファイル %s を保存しました\n", config.getConfigFile().getAbsolutePath()));
+    }
+
+    private void encodeFiles(String[] args) {
+        for (final String arg : args) {
+            final File file = new File(arg);
+            encodeFile(file);
+        }
     }
 
 }
