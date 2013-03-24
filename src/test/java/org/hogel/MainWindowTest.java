@@ -12,7 +12,6 @@ import org.fest.swing.edt.FailOnThreadViolationRepaintManager;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.fixture.FrameFixture;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -28,8 +27,8 @@ public class MainWindowTest {
         FailOnThreadViolationRepaintManager.install();
     }
 
-    @Before
-    public void before() {
+    @Test
+    public void test_show() {
         window = GuiActionRunner.execute(new GuiQuery<MainWindow>() {
             @Override
             protected MainWindow executeInEDT() {

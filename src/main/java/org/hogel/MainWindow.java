@@ -10,12 +10,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.CharacterCodingException;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import javax.inject.Inject;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -34,11 +34,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
-import com.google.common.io.Files;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
 public class MainWindow implements TableModelListener {
-
     private static final Logger LOG = LoggerFactory.getLogger(MainWindow.class);
+
+    @Inject SjisEncoder encoder;
+    @Inject Configuration config;
+    @Inject Printer printer;
 
     JFrame frame;
 
@@ -46,11 +50,24 @@ public class MainWindow implements TableModelListener {
 
     JTable replaceTable;
 
-    Encoding encoding = new Encoding();
-
-    Configuration config = new Configuration("config.yaml");
-
     private ReplaceTableModel replaceTableModel;
+
+    private JButton newReplaceButton;
+
+    public class WindowPrinter implements Printer {
+        @Override
+        public void print(String message) {
+            System.err.print(message);
+            logTextArea.setText(String.format("%s%s%n", logTextArea.getText(), message));
+        }
+
+        @Override
+        public void error(String message, Exception e) {
+            LOG.error(message, e);
+            logTextArea.setText(String.format("%s%s%n", logTextArea.getText(), message));
+            JOptionPane.showMessageDialog(frame, message);
+        }
+    }
 
     /**
      * Launch the application.
@@ -62,11 +79,10 @@ public class MainWindow implements TableModelListener {
                 public void run() {
                     try {
                         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                        final MainWindow window = new MainWindow();
                         if (args.length == 0) {
-                            window.frame.setVisible(true);
+                            launchWindow();
                         } else {
-                            window.encodeFiles(args);
+                            launchEncoder(args);
                         }
                     } catch (final Exception e) {
                         LOG.error(e.getMessage(), e);
@@ -78,11 +94,28 @@ public class MainWindow implements TableModelListener {
         }
     }
 
-    /**
-     * Create the application.
-     */
+    private static void launchWindow() {
+        final MainWindow window = new MainWindow();
+        window.frame.setVisible(true);
+    }
+
+    private static void launchEncoder(String[] args) {
+        final Slf4jPrinter printer = new Slf4jPrinter();
+        final Injector injector = Guice.createInjector(new TextEncoderModule(printer));
+        final SjisEncoder encoder = injector.getInstance(SjisEncoder.class);
+        encoder.encodeFiles(args);
+    }
+
     public MainWindow() {
         initialize();
+
+        final WindowPrinter printer = new WindowPrinter();
+        final Injector injector = Guice.createInjector(new TextEncoderModule(printer));
+        injector.injectMembers(this);
+
+        loadConfig();
+
+        initializeAction();
     }
 
     /**
@@ -120,12 +153,16 @@ public class MainWindow implements TableModelListener {
         settingPanel.add(replaceTablePane, BorderLayout.CENTER);
         tabbedPane.addTab("設定", null, settingPanel, null);
 
+        newReplaceButton = new JButton("置き換えパターン追加");
+        settingPanel.add(newReplaceButton, BorderLayout.SOUTH);
+    }
+
+    private void initializeAction() {
         final TransferHandler dropHandler = new DropHandler();
         frame.setTransferHandler(dropHandler);
         logTextArea.setTransferHandler(dropHandler);
         replaceTable.setTransferHandler(dropHandler);
 
-        final JButton newReplaceButton = new JButton("置き換えパターン追加");
         newReplaceButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -133,19 +170,18 @@ public class MainWindow implements TableModelListener {
                 replaceTableModel.setRowCount(rowCount + 1);
             }
         });
-        settingPanel.add(newReplaceButton, BorderLayout.SOUTH);
 
-        loadConfig();
         replaceTableModel.addTableModelListener(this);
     }
 
     private void loadConfig() {
-        log(String.format("設定ファイル %s を読み込みました\n", config.getConfigFile().getAbsolutePath()));
-        final Map<String, String> replacePatterns = config.getReplacePatterns();
-        encoding.setCharacterMapping(replacePatterns);
+        printer.print(String.format("設定ファイル %s を読み込みました", config.getConfigFile().getAbsolutePath()));
+        encoder.loadConfig();
 
+        final Map<String, String> replacePatterns = config.getReplacePatterns();
         replaceTableModel.setRowCount(0);
-        for (final String search : replacePatterns.keySet()) {
+        for (final Entry<String, String> pattern : replacePatterns.entrySet()) {
+            final String search = pattern.getKey();
             final String replace = replacePatterns.get(search);
             replaceTableModel.addRow(new Object[]{search, replace});
         }
@@ -159,9 +195,7 @@ public class MainWindow implements TableModelListener {
             try {
                 @SuppressWarnings("unchecked")
                 final List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                for (final File file : files) {
-                    encodeFile(file);
-                }
+                encoder.encodeFiles(files);
                 return true;
             } catch (final UnsupportedFlavorException e) {
                 LOG.error(e.getMessage(), e);
@@ -177,33 +211,6 @@ public class MainWindow implements TableModelListener {
         }
     }
 
-    private void encodeFile(File file) {
-        try {
-            final byte[] readData = Files.toByteArray(file);
-            final byte[] writeData = encoding.encode(Encoding.SJIS, readData);
-            if (Arrays.equals(readData, writeData)) {
-                log(String.format("%s は既にShift-JISです。\n", file.getPath()));
-            } else {
-                Files.write(writeData, file);
-                log(String.format("%s をShift-JISに変換しました。\n", file.getPath()));
-            }
-        } catch (final EncodingException e) {
-            final String message = String.format("%sへの変換に失敗しました:\n%s", e.getTarget().displayName(), e.getSource());
-            log(message);
-            JOptionPane.showMessageDialog(frame, message); }
-        catch (final CharacterCodingException e) {
-            log(String.format("未知の文字コードのファイルです:\n%s\n", file));
-        } catch (final IOException e) {
-            log(e.getMessage());
-            LOG.error(e.getMessage(), e);
-        }
-    }
-
-    private void log(String text) {
-        System.err.print(text);
-        logTextArea.setText(logTextArea.getText() + text);
-    }
-
     @Override
     public void tableChanged(TableModelEvent e) {
         final int rowCount = replaceTableModel.getRowCount();
@@ -216,14 +223,8 @@ public class MainWindow implements TableModelListener {
             replaceMap.put(search, replace);
         }
         config.setReplacePatterns(replaceMap);
-        log(String.format("設定ファイル %s を保存しました\n", config.getConfigFile().getAbsolutePath()));
-    }
-
-    private void encodeFiles(String[] args) {
-        for (final String arg : args) {
-            final File file = new File(arg);
-            encodeFile(file);
-        }
+        encoder.loadConfig();
+        printer.print(String.format("設定ファイル %s を保存しました", config.getConfigFile().getAbsolutePath()));
     }
 
 }

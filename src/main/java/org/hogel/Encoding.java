@@ -6,6 +6,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.util.Arrays;
 import java.util.Map;
 
 public class Encoding {
@@ -24,7 +25,7 @@ public class Encoding {
     }
 
     public Encoding(Charset[] candidates) {
-        this.candidates = candidates;
+        this.candidates = Arrays.copyOf(candidates, candidates.length);
     }
 
     public void setCharacterMapping(Map<String, String> mapping) {
