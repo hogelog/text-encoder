@@ -73,34 +73,34 @@ public class MainWindow implements TableModelListener {
      * Launch the application.
      */
     public static void main(final String[] args) {
-        try {
-            EventQueue.invokeAndWait(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                        if (args.length == 0) {
-                            launchWindow();
-                        } else {
-                            launchEncoder(args);
-                        }
-                    } catch (final Exception e) {
-                        LOG.error(e.getMessage(), e);
-                    }
-                }
-            });
-        } catch (final Exception e) {
-            LOG.error(e.getMessage(), e);
-        }
+       if (args.length > 0) {
+           launchEncoder(args);
+       } else {
+           try {
+               EventQueue.invokeAndWait(new Runnable() {
+                   @Override
+                   public void run() {
+                        launchWindow();
+                   }
+               });
+           } catch (final Exception e) {
+               LOG.error(e.getMessage(), e);
+           }
+       }
     }
 
     private static void launchWindow() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (final Exception e) {
+            LOG.error(e.getMessage(), e);
+        }
         final MainWindow window = new MainWindow();
         window.frame.setVisible(true);
     }
 
     private static void launchEncoder(String[] args) {
-        final Slf4jPrinter printer = new Slf4jPrinter();
+        final ConsolePrinter printer = new ConsolePrinter();
         final Injector injector = Guice.createInjector(new TextEncoderModule(printer));
         final SjisEncoder encoder = injector.getInstance(SjisEncoder.class);
         encoder.encodeFiles(args);

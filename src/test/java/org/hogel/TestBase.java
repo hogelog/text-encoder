@@ -16,6 +16,6 @@ public abstract class TestBase {
     }
 
     protected Printer getPrinter() {
-        return new Slf4jPrinter();
+        return new ConsolePrinter();
     }
 }
