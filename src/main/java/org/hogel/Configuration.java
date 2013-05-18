@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -21,6 +22,8 @@ import com.google.common.io.Files;
 public class Configuration {
     private static final Logger LOG = LoggerFactory.getLogger(Configuration.class);
 
+    private static final String SHOW_CONFIRM_DIALOG = "show_confirm_dialog";
+
     private static final String REPLACE_PATTERNS = "replace_patterns";
 
     private static final DumperOptions DUMPER_OPTIONS = new DumperOptions();
@@ -34,6 +37,8 @@ public class Configuration {
     private final File configFile;
 
     private Map<String, Object> configMap;
+
+    private boolean showConfirmDialog;
 
     private Map<String, String> replacePatterns;
 
@@ -55,7 +60,11 @@ public class Configuration {
         try {
             final BufferedReader reader = Files.newReader(configFile, Charsets.UTF_8);
             configMap = (Map<String, Object>) yaml.load(reader);
-            replacePatterns = getConfig(REPLACE_PATTERNS);
+            if (configMap == null) {
+                configMap = new LinkedHashMap<String, Object>();
+            }
+            showConfirmDialog = getBoolean(SHOW_CONFIRM_DIALOG);
+            replacePatterns = getMap(REPLACE_PATTERNS);
         } catch (final FileNotFoundException e) {
             LOG.error(e.getMessage(), e);
             if (configFile.delete()) {
@@ -65,18 +74,30 @@ public class Configuration {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T getConfig(String key) {
-        return (T) configMap.get(key);
+    private <T> Map<String, T> getMap(String key) {
+        Map<String, T> value = (Map<String, T>) configMap.get(key);
+        if (value == null)
+            return new LinkedHashMap<String, T>();
+        return value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean getBoolean(String key) {
+        Boolean value = (Boolean) configMap.get(key);
+        if (value == null)
+            return false;
+        return value;
     }
 
     private void initConfigFile() {
         try {
             configFile.createNewFile();
+            configMap = new LinkedHashMap<String, Object>();
+            showConfirmDialog = false;
+            replacePatterns = new LinkedHashMap<String, String>();
         } catch (final IOException e) {
             LOG.error(e.getMessage(), e);
         }
-        this.configMap = new LinkedHashMap<String, Object>();
-        this.replacePatterns = new LinkedHashMap<String, String>();
         configMap.put(REPLACE_PATTERNS, replacePatterns);
         saveConfigFile();
     }
@@ -111,5 +132,9 @@ public class Configuration {
 
     public Map<String, String> getReplacePatterns() {
         return ImmutableMap.copyOf(replacePatterns);
+    }
+
+    public boolean isShowConfirmDialog() {
+        return showConfirmDialog;
     }
 }

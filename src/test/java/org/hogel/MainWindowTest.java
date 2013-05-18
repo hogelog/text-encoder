@@ -7,6 +7,7 @@ import static org.junit.Assert.assertThat;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 import org.fest.swing.edt.FailOnThreadViolationRepaintManager;
 import org.fest.swing.edt.GuiActionRunner;
@@ -40,7 +41,7 @@ public class MainWindowTest {
     }
 
     @Test
-    public void test_arguments() throws IOException {
+    public void test_arguments() throws IOException, InvocationTargetException, InterruptedException {
         final String text = "あいうえお";
         final File sjisFile = new File("target/sjis.txt");
         final File utf8File = new File("target/utf8.txt");
@@ -48,7 +49,7 @@ public class MainWindowTest {
         Files.write(text, utf8File, UTF8);
         assertThat(Files.toString(sjisFile, SJIS), is(text));
         assertThat(Files.toString(utf8File, UTF8), is(text));
-        MainWindow.main(new String[]{sjisFile.getPath(), utf8File.getPath()});
+        MainWindow.testMain(new String[]{sjisFile.getPath(), utf8File.getPath()});
         assertThat(Files.toString(sjisFile, SJIS), is(text));
         assertThat(Files.toString(utf8File, SJIS), is(text));
     }

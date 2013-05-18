@@ -21,7 +21,7 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void test() throws IOException {
+    public void pattern() throws IOException {
         final Configuration config = new Configuration("target/config.yaml");
         assertThat(config.getConfigFile().exists(), is(true));
 
@@ -43,5 +43,13 @@ public class ConfigurationTest {
         replacePatterns = config.getReplacePatterns();
         assertThat(replacePatterns.size(), is(1));
         assertThat(replacePatterns.get("moge"), is("mog"));
+    }
+
+    @Test
+    public void confirm() throws IOException {
+        final Configuration config = new Configuration("target/config.yaml");
+
+        Map<String, String> replacePatterns = config.getReplacePatterns();
+        assertThat(config.isShowConfirmDialog(), is(false));
     }
 }

@@ -1,3 +1,4 @@
+show_confirm_dialog: false
 replace_patterns:
   –: ー
   —: ー

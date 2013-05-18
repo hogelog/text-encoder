@@ -7,8 +7,7 @@ import static org.junit.Assert.assertThat;
 
 import java.io.File;
 
-import javax.inject.Inject;
-
+import com.google.inject.Inject;
 import org.junit.Test;
 
 import com.google.common.io.Files;

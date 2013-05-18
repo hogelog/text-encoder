@@ -7,4 +7,5 @@ public interface Printer {
 
     void error(String message, Exception e);
 
+    String getMessages();
 }

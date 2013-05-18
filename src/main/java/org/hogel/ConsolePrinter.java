@@ -11,9 +11,12 @@ public class ConsolePrinter implements Printer {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsolePrinter.class);
 
+    private StringBuilder messages = new StringBuilder();
+
     @Override
-    public void print(String message) {
-        System.err.println(message);
+    public synchronized void print(String message) {
+        System.out.println(message);
+        messages.append(message).append('\n');
     }
 
     @Override
@@ -32,4 +35,8 @@ public class ConsolePrinter implements Printer {
         }
     }
 
+    @Override
+    public String getMessages() {
+        return messages.toString();
+    }
 }

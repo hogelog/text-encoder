@@ -6,9 +6,10 @@ import java.nio.charset.CharacterCodingException;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.inject.Inject;
-
 import com.google.common.io.Files;
+import com.google.inject.Inject;
+
+import javax.swing.*;
 
 public class SjisEncoder {
     @Inject Configuration config;
@@ -47,8 +48,14 @@ public class SjisEncoder {
         }
     }
 
+    public void encodeFilesFromCommand(String[] args, ConsolePrinter printer) {
+        encodeFiles(args);
+        if (config.isShowConfirmDialog()) {
+            JOptionPane.showMessageDialog(null, printer.getMessages());
+        }
+    }
+
     public void loadConfig() {
         encoding.setCharacterMapping(config.getReplacePatterns());
     }
-
 }

@@ -10,12 +10,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.inject.Inject;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -30,6 +30,7 @@ import javax.swing.UIManager;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,38 +56,57 @@ public class MainWindow implements TableModelListener {
     private JButton newReplaceButton;
 
     public class WindowPrinter implements Printer {
+        private StringBuilder messages = new StringBuilder();
+
         @Override
-        public void print(String message) {
-            System.err.print(message);
-            logTextArea.setText(String.format("%s%s%n", logTextArea.getText(), message));
+        public synchronized void print(String message) {
+            System.out.print(message);
+            messages.append(message).append('\n');
+            logTextArea.setText(messages.toString());
         }
 
         @Override
         public void error(String message, Exception e) {
             LOG.error(message, e);
-            logTextArea.setText(String.format("%s%s%n", logTextArea.getText(), message));
+            messages.append(message).append('\n');
+            logTextArea.setText(messages.toString());
             JOptionPane.showMessageDialog(frame, message);
+        }
+
+        @Override
+        public String getMessages() {
+            return messages.toString();
         }
     }
 
-    /**
-     * Launch the application.
-     */
     public static void main(final String[] args) {
-       if (args.length > 0) {
-           launchEncoder(args);
-       } else {
-           try {
-               EventQueue.invokeAndWait(new Runnable() {
-                   @Override
-                   public void run() {
-                        launchWindow();
-                   }
-               });
-           } catch (final Exception e) {
-               LOG.error(e.getMessage(), e);
-           }
-       }
+        try {
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    innerMain(args);
+                }
+            });
+        } catch (final Exception e) {
+            LOG.error(e.getMessage(), e);
+        }
+    }
+
+    public static void testMain(final String[] args) throws InvocationTargetException, InterruptedException {
+        EventQueue.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                innerMain(args);
+            }
+        });
+    }
+
+    private static void innerMain(String[] args) {
+        if (args.length > 0) {
+            launchEncoder(args);
+        } else {
+            launchWindow();
+        }
     }
 
     private static void launchWindow() {
@@ -103,7 +123,7 @@ public class MainWindow implements TableModelListener {
         final ConsolePrinter printer = new ConsolePrinter();
         final Injector injector = Guice.createInjector(new TextEncoderModule(printer));
         final SjisEncoder encoder = injector.getInstance(SjisEncoder.class);
-        encoder.encodeFiles(args);
+        encoder.encodeFilesFromCommand(args, printer);
     }
 
     public MainWindow() {
