@@ -4,6 +4,7 @@
 
 UTF-8に存在するがShift-JISには存在しない文字を置換することもできます。
 
+## ダウンロード
 - Windows用: [text-encoder-win.zip](https://github.com/hogelog/text-encoder/raw/master/dist/text-encoder-win.zip)
 - Mac用: [text-encoder-mac.zip](https://github.com/hogelog/text-encoder/raw/master/dist/text-encoder-mac.zip)
 
