@@ -4,8 +4,8 @@
 
 UTF-8に存在するがShift-JISには存在しない文字を置換することもできます。
 
-- Windows用: [text-encoder-win.zip](https://raw.github.com/hogelog/text-encoder/master/dist/text-encoder-win.zip)
-- Mac用: [text-encoder-mac.zip](https://raw.github.com/hogelog/text-encoder/master/dist/text-encoder-mac.zip)
+- Windows用: [text-encoder-win.zip](https://github.com/hogelog/text-encoder/raw/master/dist/text-encoder-win.zip)
+- Mac用: [text-encoder-mac.zip](https://github.com/hogelog/text-encoder/raw/master/dist/text-encoder-mac.zip)
 
 ## Windowsの場合
 ZIPを展開したフォルダを適当な場所に保存。
